@@ -12,22 +12,25 @@ def show_search_tab(books_df):
         unique_books = books_df.drop_duplicates(subset=["Book-Title"])
         filtered_books = unique_books[
             unique_books["Book-Title"].str.contains(search_query, case=False, na=False)
-        ][["Book-Title", "Book-Author", "Book-Rating", "Rating-Count"]]
+        ][["Book-Title", "Book-Author", "Avg-Rating", "Num-Ratings", "Bayes-Rating"]]
 
         if not filtered_books.empty:
             st.write(f"**{len(filtered_books)} books found:**")
 
-            filtered_books = filtered_books.rename(
+            # Sorted by Bayesian average, which accounts for the number of ratings.
+            filtered_books = filtered_books.sort_values(
+                by="Bayes-Rating", ascending=False
+            ).drop(columns="Bayes-Rating").rename(
                 columns={
                     "Book-Title": "Title",
                     "Book-Author": "Author",
-                    "Book-Rating": "Rating",
-                    "Rating-Count": "Number of Ratings",
+                    "Avg-Rating": "Average rating",
+                    "Num-Ratings": "Number of ratings",
                 }
             )
 
             st.dataframe(
-                filtered_books.sort_values(by="Rating", ascending=False),
+                filtered_books,
                 use_container_width=True,
                 hide_index=True,
                 height=500,
