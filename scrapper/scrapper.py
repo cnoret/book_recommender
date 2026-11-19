@@ -53,7 +53,10 @@ def retry_with_backoff(func, max_retries=5):
 def scrape_openlibrary_details(isbn):
     """Scrape Open Library for book descriptions and themes with retries."""
     if isbn in isbn_cache:
-        return isbn, isbn_cache[isbn]
+        cached = isbn_cache[isbn]
+        # Older cache files stored the description alone, without the themes.
+        description, themes = cached if isinstance(cached, tuple) else (cached, "No themes available")
+        return isbn, description, themes
 
     url = f"https://openlibrary.org/isbn/{isbn}"
 
