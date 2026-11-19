@@ -116,7 +116,7 @@ docker build -t book-recommender .
 docker run -p 7860:7860 book-recommender
 ```
 
-The app is then available at <http://localhost:7860>. The Dockerfile still installs the Deta CLI, a service that has shut down: if that step fails, remove it from the Dockerfile.
+The app is then available at <http://localhost:7860>. The image holds only the app code and `artifacts/`: `.dockerignore` keeps the data, notebooks, scraper and tests out of it.
 
 ---
 
@@ -146,10 +146,9 @@ book_recommender/
 │   └── book_titles.pkl    # Titles offered in the book selector
 ├── data/
 │   ├── Books.csv, Ratings.csv, Users.csv   # Raw Book-Crossing data
-│   ├── cleaned_data.csv                    # Cleaned ratings
 │   ├── dataset.csv                         # Intermediate dataset
 │   ├── dataset_with_details.csv            # With scraped descriptions and subjects
-│   ├── hdbscan_alternative_clusters_isbn_data(1).csv  # HDBSCAN clusters per ISBN
+│   ├── hdbscan_alternative_clusters_isbn_data.csv     # HDBSCAN clusters per ISBN
 │   └── dataset_final3.csv                  # Final dataset used by train.py
 ├── notebooks/
 │   ├── base.ipynb               # Cleaning and exploration of the raw data
@@ -158,8 +157,10 @@ book_recommender/
 │   └── trainSVD.ipynb           # SVD experiments
 ├── scrapper/
 │   ├── scrapper.py              # Scrapes descriptions and subjects from Open Library
-│   └── scrapper_cache_check.py  # Inspects the scraping cache
+│   ├── scrapper_cache_check.py  # Inspects the scraping cache
+│   └── requirements.txt         # Extra dependencies of the scraper
 ├── Dockerfile
+├── .dockerignore              # Keeps data, notebooks and tests out of the Docker image
 ├── requirements.txt
 ├── runtime.txt
 └── LICENSE

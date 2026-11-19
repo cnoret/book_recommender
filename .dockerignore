@@ -1,0 +1,13 @@
+# Only the app code and artifacts/ go into the image
+.git
+.github
+__pycache__/
+*.py[cod]
+.pytest_cache/
+data/
+notebooks/
+scrapper/
+tests/
+train.py
+evaluate_knn.py
+*.ipynb

@@ -227,7 +227,7 @@ def save_artifacts(artifacts_path, **artifacts):
 def main():
     """Main function to train the book recommender system."""
     # File paths
-    data_file_path = "./data/dataset_final3.csv"   # cleaned_data.csv
+    data_file_path = "./data/dataset_final3.csv"
     artifacts_path = "artifacts/"
 
     # Load and inspect data
