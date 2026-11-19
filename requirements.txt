@@ -1,8 +1,8 @@
-numpy<2.0
-streamlit
-streamlit-extras
-pandas
+# App dependencies (versions tested together with Python 3.11)
+numpy==1.26.4
+pandas==3.0.6
+pyarrow==20.0.0
 scikit-learn==1.5.2
-plotly
 scikit-surprise==1.1.4
-pyarrow<21
+scipy==1.17.1
+streamlit==1.67.0

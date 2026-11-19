@@ -1,0 +1,3 @@
+# Scraper dependencies, on top of ../requirements.txt
+beautifulsoup4
+requests
