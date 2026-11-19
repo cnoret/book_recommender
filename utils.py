@@ -48,14 +48,15 @@ def fetch_poster(books_df, book_list):
     return book_names, poster_urls, book_descriptions
 
 def recommend_book_knn(books_df, book_name, books_df_knn, knn_model, X_final):
-    """Recommends books based on the enriched KNN model."""
+    """Recommends books similar to `book_name` with the content-based KNN model."""
     try:
         if book_name not in books_df_knn["Book-Title"].values:
             st.error("Selected book doesn't exist.")
-            return [], []
+            return [], [], []
 
         book_idx = books_df_knn[books_df_knn["Book-Title"] == book_name].index[0]
-        distances, suggestions = knn_model.kneighbors([X_final[book_idx]], n_neighbors=10)
+        # Slicing keeps a 2D row and works for both dense and sparse matrices.
+        _, suggestions = knn_model.kneighbors(X_final[book_idx:book_idx + 1], n_neighbors=11)
         books_list = [books_df_knn.iloc[suggestion_id]["Book-Title"] for suggestion_id in suggestions[0]]
         books_list = [book for book in books_list if book != book_name]
         
@@ -63,14 +64,15 @@ def recommend_book_knn(books_df, book_name, books_df_knn, knn_model, X_final):
         return book_names, poster_urls, book_descriptions
     except Exception as e:
         st.error("Recommendation display error (KNN): " + str(e))
-        return [], []
+        return [], [], []
 
 def recommend_book_svd(user_id, books_df, svd_model, n_recommendations=10):
     """Recommend books for a given user using the SVD model."""
     if user_id not in books_df["User-ID"].unique():
+        # Bayesian average: a book rated 10 by a single reader does not win.
         popular_books = (
-            books_df.groupby("Book-Title")["Book-Rating"]
-            .mean()
+            books_df.drop_duplicates(subset="Book-Title")
+            .set_index("Book-Title")["Bayes-Rating"]
             .sort_values(ascending=False)
             .head(n_recommendations)
         )

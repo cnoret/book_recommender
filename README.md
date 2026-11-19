@@ -130,6 +130,18 @@ book-recommender-system/
 
 ---
 
+## 🧠 Training and evaluation
+
+`python train.py` rebuilds every file of `artifacts/` from `data/dataset_final3.csv`:
+
+- **Similar books (KNN)**: cosine similarity on the Open Library subjects and final tags (TF-IDF), the descriptions (TF-IDF), the author and the HDBSCAN cluster (one-hot). Each block is normalized and weighted separately (`FEATURE_WEIGHTS` in `train.py`).
+- **Weighted ratings**: `Avg-Rating`, `Num-Ratings` and a Bayesian average `Bayes-Rating`, used by the Top-Rated tab, the search and the guest recommendations.
+- **SVD**: RMSE, MAE, precision@5 and recall@5 are printed on a 20 % held-out split, next to a baseline, then the final model is retrained on all the ratings.
+
+`python evaluate_knn.py` prints proxy metrics for the similar-books recommendations (same author, tag overlap, shared readers), compared with random books.
+
+---
+
 ## 🎨 Screenshots
 
 ### 🌐 Home Page

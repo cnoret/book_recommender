@@ -7,8 +7,8 @@ def show_top_rated_books(books_df):
     st.subheader("⭐ Top-rated books")
     
     top_rated_books = (
-        books_df.sort_values(by="Book-Rating", ascending=False)
-        .drop_duplicates(subset="Book-Title")
+        books_df.drop_duplicates(subset="Book-Title")
+        .sort_values(by="Bayes-Rating", ascending=False)
         .head(10)
     )
     
