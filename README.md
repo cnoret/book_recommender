@@ -100,6 +100,15 @@ python train.py        # rebuilds every file of artifacts/ from data/dataset_fin
 python evaluate_knn.py # prints the similar-books metrics
 ```
 
+### Run the tests
+
+```bash
+pip install pytest
+pytest -q              # unit tests for utils.py and train.py, plus an end-to-end run of the app
+```
+
+The same tests run on GitHub Actions for every pull request and every push to `main`.
+
 ### Docker
 
 ```bash
@@ -126,6 +135,8 @@ book_recommender/
 │   └── tab6.py            # Top-Rated books
 ├── train.py               # Trains the KNN and SVD models and writes artifacts/
 ├── evaluate_knn.py        # Proxy metrics for the similar-books recommendations
+├── tests/                 # pytest suite (utils, train, app)
+├── .github/workflows/     # GitHub Actions: runs the tests
 ├── artifacts/             # Trained models and preprocessed data loaded by the app
 │   ├── knn_model.pkl      # Content-based NearestNeighbors model
 │   ├── X_final.pkl        # Feature matrix of the KNN model
