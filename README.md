@@ -1,11 +1,22 @@
-# 📚 Book Recommender System
+<h1 align="center">📚 Next Chapter</h1>
 
-A Streamlit application that recommends books in two complementary ways:
+<p align="center"><em>Find the book that comes after the one you just closed.</em></p>
+
+<p align="center">
+  <a href="https://github.com/cnoret/book_recommender/actions/workflows/tests.yml"><img src="https://github.com/cnoret/book_recommender/actions/workflows/tests.yml/badge.svg" alt="Tests"></a>
+  <img src="https://img.shields.io/badge/python-3.11-blue" alt="Python 3.11">
+  <img src="https://img.shields.io/badge/built%20with-Streamlit-ff4b4b" alt="Built with Streamlit">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License"></a>
+</p>
+
+**Next Chapter** is a book recommender built with Streamlit. It suggests books in two complementary ways:
 
 - **Books like this one**: a content-based k-Nearest Neighbors model that compares tags, descriptions, authors and thematic clusters.
 - **Books for you**: a collaborative filtering model (SVD) that predicts how a reader would rate the books they have not read yet.
 
 The dataset is built from the [Book-Crossing](https://www.kaggle.com/datasets/arashnic/book-recommendation-dataset) ratings, enriched with descriptions and subjects scraped from [Open Library](https://openlibrary.org/), then grouped into thematic clusters with HDBSCAN. The working dataset (`data/dataset_final3.csv`) holds **42,331 ratings** of **3,217 books** by **1,914 readers**, on a 1 to 10 scale.
+
+It started as a team project in January 2025 and was later reworked from end to end by [Christophe Noret](https://github.com/cnoret): see [Project history](#-project-history).
 
 ---
 
@@ -167,6 +178,31 @@ book_recommender/
 ├── runtime.txt
 └── LICENSE
 ```
+
+---
+
+## 📜 Project history
+
+### Version 1: a team project (January 2025)
+
+Next Chapter began as a group project, built in a few days by four people:
+
+| Member | Main contributions |
+| --- | --- |
+| [Christophe Noret](https://github.com/cnoret) | First Streamlit app, training script, Docker setup, Open Library scraper |
+| Fabien Messinger | Data cleaning and exploration, split of the app into tabs, notebooks |
+| Florent Lebrun | KNN and SVD models, final training pipeline and dataset |
+| Charles Dabin | Tag processing and HDBSCAN thematic clusters |
+
+### Version 2: the rework (November 2026)
+
+Christophe Noret then took the project over alone and rebuilt most of it:
+
+- **Better recommendations**: the KNN features were redesigned (separate, weighted blocks for tags, author, description and cluster), and `evaluate_knn.py` was added to measure them. Same-author matches went from 0.280 to 0.483 and shared readers from 0.210 to 0.328.
+- **A new interface**: page navigation instead of tabs, book cards with covers and ratings, a "Details" panel, light and dark themes, and a layout that works on phones.
+- **Reliability**: a cache for the scraper, fallbacks for missing descriptions and covers, a pytest suite and GitHub Actions.
+- **Deployment**: pinned dependencies and a lighter Docker image.
+- **Documentation**: this README.
 
 ---
 
