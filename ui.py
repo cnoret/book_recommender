@@ -32,6 +32,9 @@ CSS = """
 @media (max-width: 1100px) { [data-testid="stGrid"] { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; } }
 @media (max-width: 820px)  { [data-testid="stGrid"] { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; } }
 @media (max-width: 560px)  { [data-testid="stGrid"] { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } }
+/* Tagline under the app name */
+.tagline { font-family: Georgia, "Times New Roman", serif; font-style: italic; font-size: 1.35rem;
+    opacity: .8; margin: -.6rem 0 .4rem 0; }
 /* Selected book header */
 .book-hero { display: flex; gap: 1.5rem; align-items: flex-start; }
 .book-hero .book-cover { width: 150px; flex: 0 0 150px; }

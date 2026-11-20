@@ -30,7 +30,7 @@ The app has five pages, reachable from the top navigation bar. Every book is sho
 | **Similar books** | Pick a book and get the ten most similar ones from the KNN model. |
 | **For a reader** | Choose a reader from the dataset (or a random one): the app shows the books they rated highest, then the ten books the SVD model predicts they would like. Without a reader, the best books by Bayesian average. |
 | **Search** | Search by title or author, sorted by Bayesian average, as covers or as a table. |
-| **About** | How the recommendations work, the data and its limits. |
+| **About** | How the recommendations work, evaluation, the data and its limits, and the project history with its credits. |
 
 The look (colours, fonts, light and dark themes) is set in `.streamlit/config.toml`.
 
@@ -144,7 +144,7 @@ book_recommender/
 │   ├── similar.py         # Similar books (KNN)
 │   ├── for_you.py         # Picks for a reader (SVD)
 │   ├── search.py          # Search by title or author
-│   └── about.py           # Method, data and limits
+│   └── about.py           # Method, evaluation, data, history and credits
 ├── .streamlit/config.toml # Theme (light and dark) and toolbar
 ├── train.py               # Trains the KNN and SVD models and writes artifacts/
 ├── evaluate_knn.py        # Proxy metrics for the similar-books recommendations

@@ -36,3 +36,9 @@ def test_titles_are_unescaped():
     at = AppTest.from_file(APP, default_timeout=120).run()
     assert "&amp;amp;" not in _markdown(at)
     assert "Griffin &amp; Sabine" in _markdown(at)  # escaped once, as HTML should be
+
+
+def test_branding_and_about_page():
+    at = AppTest.from_file(APP, default_timeout=120).run()
+    assert at.title[0].value == "Next Chapter"
+    assert "Find the book that comes after the one you just closed." in _markdown(at)
