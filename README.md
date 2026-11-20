@@ -190,9 +190,9 @@ Next Chapter began as a group project, built in a few days by four people:
 | Member | Main contributions |
 | --- | --- |
 | [Christophe Noret](https://github.com/cnoret) | First Streamlit app, training script, Docker setup, Open Library scraper |
-| Fabien Messinger | Data cleaning and exploration, split of the app into tabs, notebooks |
-| Florent Lebrun | KNN and SVD models, final training pipeline and dataset |
-| Charles Dabin | Tag processing and HDBSCAN thematic clusters |
+| [Fabien Messinger](https://github.com/f-msngr) | Data cleaning and exploration, split of the app into tabs, notebooks |
+| [Florent Lebrun](https://github.com/FLebrun-67) | KNN and SVD models, final training pipeline and dataset |
+| [Charles Dabin](https://github.com/charlesdab) | Tag processing and HDBSCAN thematic clusters |
 
 ### Version 2: the rework (November 2026)
 
