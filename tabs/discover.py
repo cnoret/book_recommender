@@ -4,9 +4,11 @@ from ui import book_grid, go_to_similar
 
 
 def show(catalog):
-    st.title("Find your next book")
+    st.title("Next Chapter")
+    st.markdown('<p class="tagline">Find the book that comes after the one you just closed.</p>',
+                unsafe_allow_html=True)
     st.markdown(
-        "Pick a book you loved to get ten close matches, or step into the shoes of a reader "
+        "Start from a book you loved to get ten close matches, or step into the shoes of a reader "
         "from the dataset to see what the model would suggest to them."
     )
     c1, c2, _ = st.columns([1, 1, 2])

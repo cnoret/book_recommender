@@ -5,8 +5,8 @@ from ui import build_catalog, inject_css
 from utils import load_model_and_data
 
 st.set_page_config(
-    page_title="Book Recommender",
-    page_icon="📖",
+    page_title="Next Chapter",
+    page_icon="📚",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
@@ -32,6 +32,7 @@ st.navigation(list(pages.values()), position="top").run()
 
 st.divider()
 st.caption(
-    "3,217 books and 42,331 ratings from the Book-Crossing dataset, "
-    "with summaries from Open Library. Covers may be missing for some books."
+    "**Next Chapter** · 3,217 books and 42,331 ratings from the Book-Crossing dataset, "
+    "with summaries from Open Library. Covers may be missing for some books. · "
+    "[Source code on GitHub](https://github.com/cnoret/book_recommender)"
 )
