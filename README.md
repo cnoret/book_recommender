@@ -3,13 +3,14 @@
 <p align="center"><em>Find the book that comes after the one you just closed.</em></p>
 
 <p align="center">
+  <a href="https://next-chapter.streamlit.app"><img src="https://static.streamlit.io/badges/streamlit_badge_black_white.svg" alt="Open in Streamlit"></a>
   <a href="https://github.com/cnoret/book_recommender/actions/workflows/tests.yml"><img src="https://github.com/cnoret/book_recommender/actions/workflows/tests.yml/badge.svg" alt="Tests"></a>
   <img src="https://img.shields.io/badge/python-3.11-blue" alt="Python 3.11">
   <img src="https://img.shields.io/badge/built%20with-Streamlit-ff4b4b" alt="Built with Streamlit">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License"></a>
 </p>
 
-**Next Chapter** is a book recommender built with Streamlit. It suggests books in two complementary ways:
+**Next Chapter** is a book recommender built with Streamlit: **[try it online](https://next-chapter.streamlit.app)**. It suggests books in two complementary ways:
 
 - **Books like this one**: a content-based k-Nearest Neighbors model that compares tags, descriptions, authors and thematic clusters.
 - **Books for a reader**: a hybrid model that starts from the books a reader loved and suggests books close to them in content and loved by the same readers.
