@@ -1,11 +1,12 @@
 """ Scrape Open Library for book descriptions and themes using concurrent requests. """
 
 import pickle
-import time
 import random
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-import requests
+
 import pandas as pd
+import requests
 from bs4 import BeautifulSoup
 
 

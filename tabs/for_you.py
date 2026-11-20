@@ -11,10 +11,10 @@ def reader_stats(_books_df):
     return _books_df.groupby("User-ID")["Book-Rating"].count().sort_values(ascending=False)
 
 
-def show(catalog, books_df, reader_model):
+def show(catalog, books_df, reader_model, counts):
     st.title("Picks for a reader")
     st.markdown(
-        "This demo has no accounts: choose one of the 1,914 readers of the dataset and see "
+        f"This demo has no accounts: choose one of the {counts['readers']:,} readers of the dataset and see "
         "the books the app would suggest to them next."
     )
     stats = reader_stats(books_df)

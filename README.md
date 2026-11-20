@@ -77,7 +77,7 @@ Both scores are standardized, then added up. Books the reader has rated, and oth
 | --- | --- | --- |
 | Same author | 0.462 | 0.003 |
 | Tags overlap (Jaccard) | 0.624 | 0.228 |
-| Shared readers (liked by someone who liked the query book) | 0.324 | 0.060 |
+| Shared readers (liked by someone who liked the query book) | 0.322 | 0.060 |
 
 The shared readers metric is not used by the model, so it is an independent check that the neighbors make sense to real readers. The scores are a little lower than before other editions were left out, because an edition of the same book always counted as a perfect match.
 
@@ -85,14 +85,13 @@ The shared readers metric is not used by the model, so it is an independent chec
 
 | Model | Hit@10 | Recall@10 | Distinct books | Overlap |
 | --- | --- | --- | --- | --- |
-| Most read | 0.115 | 0.044 | 15 | 0.899 |
-| Bayesian average | 0.038 | 0.009 | 13 | 0.978 |
-| SVD (predicted rating) | 0.048 | 0.012 | 76 | 0.527 |
-| **Hybrid (content + co-liked)** | **0.305** | **0.135** | **1,602** | **0.010** |
+| Most read | 0.132 | 0.040 | 15 | 0.905 |
+| Bayesian average | 0.028 | 0.007 | 14 | 0.968 |
+| **Hybrid (content + co-liked)** | **0.302** | **0.125** | **1,591** | **0.009** |
 
 *Hit@10*: share of readers with at least one loved book in their ten picks. *Distinct books*: different books over the 400 lists. *Overlap*: share of picks two readers have in common.
 
-The app used to rank books by the rating an SVD model predicted. With about 22 ratings per reader, that prediction is mostly the book's own average, so almost everyone got the same list (half of it shared by any two readers) and it found a loved book for fewer than 5 % of readers. The hybrid finds one for 30 %, and its lists are personal.
+The app used to rank books by the rating an SVD model ([Surprise](https://surpriselib.com/), 50 factors) predicted. With about 22 ratings per reader, that prediction is mostly the book's own average, so almost everyone got the same list. Measured the same way before it was removed, it found a loved book for 4.8 % of readers, with 76 distinct books and half of any two lists in common. The hybrid finds one for 30 %, and its lists are personal.
 
 ---
 
@@ -100,8 +99,7 @@ The app used to rank books by the rating an SVD model predicted. With about 22 r
 
 ### Prerequisites
 
-- Python 3.11 (see `runtime.txt`). `scikit-surprise` 1.1.4 does not build on recent Python versions such as 3.13.
-- A C compiler, needed to build `scikit-surprise`.
+- Python 3.11 (see `runtime.txt`). Every dependency installs from a prebuilt wheel: no compiler is needed.
 
 ### Run the app
 
@@ -126,11 +124,14 @@ python evaluate_knn.py # prints the similar-books metrics
 ### Run the tests
 
 ```bash
-pip install pytest
+pip install -r requirements-dev.txt   # the app dependencies, plus pytest and ruff
+ruff check .           # lint (settings in ruff.toml, notebooks left out)
 pytest -q              # unit tests for recommender.py, utils.py and train.py, plus end-to-end runs of the app pages
 ```
 
-The same tests run on GitHub Actions for every pull request and every push to `main`.
+GitHub Actions runs the lint and the tests for every pull request and every push to `main`, then builds the Docker image, starts it and waits for its health check.
+
+A dev container (`.devcontainer/`) sets up the same environment in GitHub Codespaces or VS Code, and starts the app.
 
 ### Docker
 
@@ -139,7 +140,7 @@ docker build -t book-recommender .
 docker run -p 7860:7860 book-recommender
 ```
 
-The app is then available at <http://localhost:7860>. The image holds only the app code and `artifacts/`: `.dockerignore` keeps the data, notebooks, scraper and tests out of it.
+The app is then available at <http://localhost:7860>. The image holds only the app code and `artifacts/`: `.dockerignore` keeps the data, notebooks, scraper and tests out of it. The port can be changed with the `PORT` environment variable (`docker run -e PORT=8080 -p 8080:8080 book-recommender`), and Docker reports the container as healthy once Streamlit answers on `/_stcore/health`.
 
 ---
 
@@ -161,7 +162,8 @@ book_recommender/
 ├── train.py               # Trains the KNN model, evaluates the books for a reader, writes artifacts/
 ├── evaluate_knn.py        # Proxy metrics for the similar-books recommendations
 ├── tests/                 # pytest suite (recommender, utils, train, app)
-├── .github/workflows/     # GitHub Actions: runs the tests
+├── .github/workflows/     # GitHub Actions: lint, tests, Docker build and health check
+├── .devcontainer/         # Dev container for Codespaces and VS Code
 ├── artifacts/             # Trained models and preprocessed data loaded by the app
 │   ├── knn_model.pkl      # Content-based NearestNeighbors model
 │   ├── X_final.pkl        # Feature matrix of the KNN model
@@ -185,7 +187,9 @@ book_recommender/
 │   └── requirements.txt         # Extra dependencies of the scraper
 ├── Dockerfile
 ├── .dockerignore              # Keeps data, notebooks and tests out of the Docker image
-├── requirements.txt
+├── requirements.txt           # App dependencies
+├── requirements-dev.txt       # App dependencies, plus pytest and ruff
+├── ruff.toml                  # Lint settings
 ├── runtime.txt
 └── LICENSE
 ```
@@ -222,7 +226,6 @@ Christophe Noret then took the project over alone and rebuilt most of it:
 
 - [Streamlit](https://streamlit.io/) for the interface
 - [scikit-learn](https://scikit-learn.org/) for TF-IDF, one-hot encoding and the KNN model
-- [Surprise](https://surpriselib.com/) for the SVD model used as a comparison in the evaluation
 - [pandas](https://pandas.pydata.org/), [NumPy](https://numpy.org/) and [SciPy](https://scipy.org/) for the data
 - [Requests](https://requests.readthedocs.io/) and [Beautiful Soup](https://www.crummy.com/software/BeautifulSoup/) for the scraping
 

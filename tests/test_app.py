@@ -38,10 +38,12 @@ def test_titles_are_unescaped():
     assert "Griffin &amp; Sabine" in _markdown(at)  # escaped once, as HTML should be
 
 
-def test_branding_and_about_page():
+def test_branding_and_counts():
     at = AppTest.from_file(APP, default_timeout=120).run()
     assert at.title[0].value == "Next Chapter"
     assert "Find the book that comes after the one you just closed." in _markdown(at)
+    # The footer counts come from the data, not from a hard-coded text.
+    assert any("3,217 books and 42,331 ratings" in c.value for c in at.caption)
 
 
 def _page(name):
@@ -49,15 +51,17 @@ def _page(name):
     def script(page):
         import streamlit as st
 
-        from tabs import for_you, search
-        from ui import build_catalog
+        from tabs import about, for_you, search
+        from ui import build_catalog, dataset_counts
         from utils import load_model_and_data
 
         _, _, books_df, _, _, _, reader_model = load_model_and_data()
         catalog = build_catalog(books_df)
         st.session_state["pages"] = {}
         if page == "for_you":
-            for_you.show(catalog, books_df, reader_model)
+            for_you.show(catalog, books_df, reader_model, dataset_counts(books_df))
+        elif page == "about":
+            about.show(dataset_counts(books_df))
         else:
             search.show(catalog)
 
@@ -93,3 +97,9 @@ def test_search_by_title_and_author():
 
     at.text_input[0].input("(").run()  # not a regular expression
     assert not at.exception
+
+
+def test_about_page_counts_come_from_the_data():
+    at = _page("about").run()
+    assert not at.exception
+    assert [m.value for m in at.metric] == ["3,217", "1,914", "42,331"]

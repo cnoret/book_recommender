@@ -1,8 +1,7 @@
 # App dependencies (versions tested together with Python 3.11)
-numpy==1.26.4
+numpy==2.2.6
 pandas==3.0.6
-pyarrow==20.0.0
+pyarrow==23.0.1
 scikit-learn==1.5.2
-scikit-surprise==1.1.4
 scipy==1.17.1
 streamlit==1.67.0

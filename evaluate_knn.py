@@ -30,16 +30,21 @@ editions = EditionIndex(titles, bk["Book-Author"])
 auth = dict(zip(bk.ISBN, bk["Book-Author"].str.lower().str.strip()))
 rng = np.random.default_rng(0)
 idx = rng.choice(len(bk), 500, replace=False)
-K=10
+K = 10
+
+
 def stats(pairs):
-    sa=jac=co=0; n=0
-    for q,r in pairs:
-        n+=1
-        sa += auth[q]==auth[r]
-        a,b=tags[q],tags[r]; jac += len(a&b)/len(a|b)
-        co += len(readers.get(q,set()) & readers.get(r,set()))>0
-    return sa/n, jac/n, co/n
-pairs=[]; rand=[]
+    sa = jac = co = n = 0
+    for q, r in pairs:
+        n += 1
+        sa += auth[q] == auth[r]
+        a, b = tags[q], tags[r]
+        jac += len(a & b) / len(a | b)
+        co += len(readers.get(q, set()) & readers.get(r, set())) > 0
+    return sa / n, jac / n, co / n
+
+
+pairs, rand = [], []
 for i in idx:
     q = bk.ISBN.iloc[i]
     # Same selection as the app: other editions of the book are left out.
