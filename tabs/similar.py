@@ -4,7 +4,7 @@ from ui import book_grid, book_hero
 from utils import recommend_book_knn
 
 
-def show(catalog, books_df, books_df_knn, knn_model, X_final):
+def show(catalog, books_df, books_df_knn, knn_model, X_final, editions):
     st.title("Books like this one")
     options = sorted(catalog.index, key=lambda t: catalog.at[t, "Display-Title"].lstrip("'\"").lower())
     # The selection survives page changes and can be set from any book card.
@@ -26,7 +26,7 @@ def show(catalog, books_df, books_df_knn, knn_model, X_final):
     book_hero(catalog, choice)
     st.header("Ten similar books")
     st.caption("Close in tags, summary, author and theme. Ratings are not used to pick them.")
-    titles, _, _ = recommend_book_knn(books_df, choice, books_df_knn, knn_model, X_final)
+    titles, _, _ = recommend_book_knn(books_df, choice, books_df_knn, knn_model, X_final, editions)
     if titles:
         book_grid(catalog, titles, key="similar")
     else:

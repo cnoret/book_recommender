@@ -1,10 +1,6 @@
-from collections import namedtuple
-
 import pandas as pd
 
-from train import add_weighted_ratings, precision_recall_at_k
-
-Prediction = namedtuple("Prediction", "uid iid r_ui est details")
+from train import add_weighted_ratings, ranking_metrics
 
 
 def test_bayes_rating_pulls_rare_books_towards_the_mean():
@@ -20,17 +16,11 @@ def test_bayes_rating_pulls_rare_books_towards_the_mean():
     assert stats.loc["Classic", "Bayes-Rating"] > stats.loc["Rare", "Bayes-Rating"]
 
 
-def test_precision_recall_at_k():
-    # One user, 10 held-out ratings, 4 relevant (>= 8), the model ranks 3 of them in its top 5.
-    true = [9, 9, 9, 2, 2, 8, 1, 1, 1, 1]
-    est = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
-    preds = [Prediction(1, i, t, e, {}) for i, (t, e) in enumerate(zip(true, est))]
-    precision, recall, n_users = precision_recall_at_k(preds, k=5, threshold=8, min_items=10)
-    assert n_users == 1
-    assert precision == 3 / 5
-    assert recall == 3 / 4
-
-
-def test_precision_recall_skips_users_with_few_ratings():
-    preds = [Prediction(1, i, 9, 9, {}) for i in range(3)]
-    assert precision_recall_at_k(preds, min_items=10)[2] == 0
+def test_ranking_metrics():
+    held_out = {1: {"A", "B"}, 2: {"C"}}
+    tops = {1: ["A", "X", "Y"], 2: ["X", "Y", "Z"]}
+    metrics = ranking_metrics(tops, held_out, k=3)
+    assert metrics["Hit@3"] == 0.5          # reader 1 finds A, reader 2 finds nothing
+    assert metrics["Recall@3"] == (1 / 2 + 0) / 2
+    assert metrics["Distinct books"] == 4   # A, X, Y, Z
+    assert metrics["Overlap"] == 2 / 3      # X and Y in both lists

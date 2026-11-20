@@ -11,16 +11,16 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-knn_model, book_titles, books_df, svd_model, X_final, books_df_knn = load_model_and_data()
+knn_model, book_titles, books_df, X_final, books_df_knn, editions, reader_model = load_model_and_data()
 catalog = build_catalog(books_df)
 inject_css()
 
 pages = {
     "discover": st.Page(lambda: discover.show(catalog), title="Discover", icon=":material/auto_stories:",
                         url_path="discover", default=True),
-    "similar": st.Page(lambda: similar.show(catalog, books_df, books_df_knn, knn_model, X_final),
+    "similar": st.Page(lambda: similar.show(catalog, books_df, books_df_knn, knn_model, X_final, editions),
                        title="Similar books", icon=":material/library_books:", url_path="similar"),
-    "for_you": st.Page(lambda: for_you.show(catalog, books_df, svd_model), title="For a reader",
+    "for_you": st.Page(lambda: for_you.show(catalog, books_df, reader_model), title="For a reader",
                        icon=":material/person:", url_path="for-you"),
     "search": st.Page(lambda: search.show(catalog), title="Search", icon=":material/search:",
                       url_path="search"),
