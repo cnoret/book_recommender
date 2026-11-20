@@ -11,16 +11,17 @@ The dataset is built from the [Book-Crossing](https://www.kaggle.com/datasets/ar
 
 ## 🔍 Features
 
-The app is organized in tabs.
+The app has five pages, reachable from the top navigation bar. Every book is shown as a card with its cover, author, average rating and number of ratings; its **Details** button opens the summary and a shortcut to similar books.
 
-| Tab | What it does |
+| Page | What it does |
 | --- | --- |
-| 🦄 **Login / Guest** | Pick a reader from the dataset, or stay as a guest. The choice drives the personalized recommendations. |
-| 🧑‍💻 **My Recommendations** | Ten books the selected reader has not rated yet, ranked by the rating the SVD model predicts. Guests get the ten best books by Bayesian average instead. Descriptions can be shown, and a history keeps the past recommendations of the session. |
-| 📚 **Recommendations by books** | Pick a book and get the ten most similar ones from the KNN model, with covers and optional descriptions. |
-| 🔍 **Search** | Keyword search on titles, with author, average rating and number of ratings, sorted by Bayesian average. A button also suggests a random book. |
-| 📈 **Popular books** | The most rated books of the dataset. |
-| ⭐ **Top-Rated books** | The best books by Bayesian average, so that a book rated 10 by a single reader does not top the list. |
+| **Discover** | The ten most read books (by number of ratings) and the ten best rated (by Bayesian average), plus a "Surprise me" button. |
+| **Similar books** | Pick a book and get the ten most similar ones from the KNN model. |
+| **For a reader** | Choose a reader from the dataset (or a random one): the app shows the books they rated highest, then the ten books the SVD model predicts they would like. Without a reader, the best books by Bayesian average. |
+| **Search** | Search by title or author, sorted by Bayesian average, as covers or as a table. |
+| **About** | How the recommendations work, the data and its limits. |
+
+The look (colours, fonts, light and dark themes) is set in `.streamlit/config.toml`.
 
 ---
 
@@ -45,7 +46,7 @@ The SVD model from [Surprise](https://surpriselib.com/) (50 factors) is trained 
 
 ### Weighted ratings
 
-`train.py` adds three columns per book: `Avg-Rating` (mean rating), `Num-Ratings` (number of ratings) and `Bayes-Rating`, a Bayesian average that pulls books with few ratings towards the global mean (the prior is the median number of ratings per book). The Top-Rated tab, the search results and the guest recommendations are all sorted on `Bayes-Rating`.
+`train.py` adds three columns per book: `Avg-Rating` (mean rating), `Num-Ratings` (number of ratings) and `Bayes-Rating`, a Bayesian average that pulls books with few ratings towards the global mean (the prior is the median number of ratings per book). The Highest rated list, the search results and the guest recommendations are all sorted on `Bayes-Rating`.
 
 ---
 
@@ -124,15 +125,16 @@ The app is then available at <http://localhost:7860>. The image holds only the a
 
 ```
 book_recommender/
-├── app.py                 # Streamlit entry point: loads the artifacts and lays out the tabs
-├── utils.py               # Loading, KNN and SVD recommendation, poster and display helpers
-├── tabs/                  # One module per tab
-│   ├── tab0.py            # Login / Guest
-│   ├── tab1.py            # My Recommendations (SVD)
-│   ├── tab2.py            # Recommendations by books (KNN)
-│   ├── tab3.py            # Search and random book
-│   ├── tab5.py            # Popular books
-│   └── tab6.py            # Top-Rated books
+├── app.py                 # Streamlit entry point: loads the artifacts and sets up the pages
+├── ui.py                  # Book cards, responsive grids and page styles
+├── utils.py               # Loading, KNN and SVD recommendation helpers
+├── tabs/                  # One module per page
+│   ├── discover.py        # Most read and highest rated books
+│   ├── similar.py         # Similar books (KNN)
+│   ├── for_you.py         # Picks for a reader (SVD)
+│   ├── search.py          # Search by title or author
+│   └── about.py           # Method, data and limits
+├── .streamlit/config.toml # Theme (light and dark) and toolbar
 ├── train.py               # Trains the KNN and SVD models and writes artifacts/
 ├── evaluate_knn.py        # Proxy metrics for the similar-books recommendations
 ├── tests/                 # pytest suite (utils, train, app)

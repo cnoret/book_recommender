@@ -1,5 +1,6 @@
-import pandas as pd
 from collections import namedtuple
+
+import pandas as pd
 
 from train import add_weighted_ratings, precision_recall_at_k
 
