@@ -12,8 +12,8 @@ Next Chapter suggests books in two complementary ways:
 
 - **Books like this one**: a content-based nearest-neighbours model (KNN) that compares tags,
   descriptions, authors and thematic clusters.
-- **Books for you**: a collaborative filtering model (SVD) that predicts how a reader would rate
-  the books they have not read yet.
+- **Books for a reader**: a hybrid model that starts from the books a reader loved and suggests
+  books close to them in content and loved by the same readers.
 """)
     c1, c2, c3 = st.columns(3)
     c1.metric("Books", "3,217")
@@ -34,12 +34,15 @@ then weighted:
 | HDBSCAN thematic cluster | one-hot | 0.3 |
 
 Neighbours are found with cosine similarity. The rating is left out on purpose: similar books are
-books that talk about the same things, not books that got the same mark.
+books that talk about the same things, not books that got the same mark. Other editions of the
+same book (*Alias Grace* and *Alias Grace : A Novel*) are left out of the suggestions.
 """)
     st.subheader("Books for a reader")
     st.markdown("""
-The SVD model from Surprise (50 factors) is trained on the reader × book ratings and predicts
-how a reader would rate each book they have not rated; the app keeps the ten best.
+The app starts from the books the reader loved (rated 8 or more) and gives every other book two
+scores: its similarity in content to those books, and how often the readers who loved the same
+books also loved it. Both are standardized and added up, books they already rated are left out,
+and each pick shows the loved book it comes from.
 """)
     st.subheader("Weighted ratings")
     st.markdown("""
@@ -53,19 +56,22 @@ global mean, so that a single 10/10 does not put a book at the top.
 
 | Metric | KNN | Random |
 | --- | --- | --- |
-| Same author | 0.483 | 0.003 |
-| Tags overlap (Jaccard) | 0.628 | 0.228 |
-| Shared readers | 0.328 | 0.060 |
+| Same author | 0.462 | 0.003 |
+| Tags overlap (Jaccard) | 0.624 | 0.228 |
+| Shared readers | 0.324 | 0.060 |
 
-**Books for a reader**: on a 20 % held-out split, a rating of 8 or more counts as relevant.
+**Books for a reader**: 20 % of the ratings are held out. For 400 readers, each model ranks every
+book they have not rated and is scored on the held-out books they loved.
 
-| Model | RMSE | Precision@5 | Recall@5 |
+| Model | Hit@10 | Recall@10 | Distinct books |
 | --- | --- | --- | --- |
-| SVD | 1.495 | 0.733 | 0.435 |
-| Baseline (user and book biases) | 1.512 | 0.743 | 0.439 |
-| Random order | | 0.672 | 0.392 |
+| Most read | 0.115 | 0.044 | 15 |
+| SVD (predicted rating) | 0.048 | 0.012 | 76 |
+| **Hybrid (content + co-liked)** | **0.305** | **0.135** | **1,602** |
 
-Ratings are sparse (about 22 per reader), so SVD barely beats the baseline for now.
+*Hit@10* is the share of readers with at least one loved book among their ten picks, and
+*distinct books* counts the different books over the 400 lists. The app first used SVD: with
+about 22 ratings per reader, it gave almost everyone the same list.
 """)
 
     st.header("Data and limits")
@@ -95,7 +101,10 @@ Next Chapter began as a group project, built in a few days by four people:
 [Christophe Noret](https://github.com/cnoret) then took the project over alone and rebuilt most of it:
 
 - **Better recommendations**: redesigned KNN features and a dedicated evaluation
-  (same-author matches from 0.280 to 0.483, shared readers from 0.210 to 0.328).
+  (same-author matches from 0.280 to 0.483, shared readers from 0.210 to 0.328), without
+  other editions of the same book.
+- **Personal picks**: a hybrid of content and co-liked books instead of SVD, with the reason for
+  each pick; a loved book found for 30 % of readers instead of 5 %.
 - **A new interface**: pages instead of tabs, book cards, a Details panel, light and dark themes,
   and a layout that works on phones.
 - **Reliability**: a cache for the scraper, fallbacks for missing descriptions and covers,

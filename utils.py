@@ -1,19 +1,27 @@
 import html
 import pickle
-import pandas as pd
+
 import streamlit as st
+
+from recommender import EditionIndex, ReaderRecommender, similar_books
+
+
+def _load(name):
+    with open(f"artifacts/{name}.pkl", "rb") as f:
+        return pickle.load(f)
+
 
 @st.cache_resource
 def load_model_and_data():
-    """Load the pre-trained model and data."""
-    knn_model = pickle.load(open("artifacts/knn_model.pkl", "rb"))
-    book_titles = pickle.load(open("artifacts/book_titles.pkl", "rb"))
-    books_df = pickle.load(open("artifacts/book_df.pkl", "rb"))
-    svd_model = pickle.load(open('artifacts/svd_model.pkl', 'rb'))
-    X_final = pickle.load(open('artifacts/X_final.pkl', 'rb'))
-    books_df_knn = pickle.load(open('artifacts/book_df_knn.pkl', 'rb'))
-
-    return knn_model, book_titles, books_df, svd_model, X_final, books_df_knn
+    """Loads the trained artifacts and builds the reader recommender."""
+    knn_model = _load("knn_model")
+    book_titles = _load("book_titles")
+    books_df = _load("book_df")
+    X_final = _load("X_final")
+    books_df_knn = _load("book_df_knn")
+    editions = EditionIndex(books_df_knn["Book-Title"], books_df_knn["Book-Author"])
+    reader_model = ReaderRecommender(books_df, X_final, books_df_knn["Book-Title"], editions)
+    return knn_model, book_titles, books_df, X_final, books_df_knn, editions, reader_model
 
 # Neutral book cover drawn inline, so it never depends on an external service.
 DEFAULT_IMAGE = (
@@ -71,53 +79,38 @@ def fetch_poster(books_df, book_list):
     return book_names, poster_urls, book_descriptions
 
 
-def recommend_book_knn(books_df, book_name, books_df_knn, knn_model, X_final):
-    """Recommends books similar to `book_name` with the content-based KNN model."""
-    try:
-        if book_name not in books_df_knn["Book-Title"].values:
-            st.error("Selected book doesn't exist.")
-            return [], [], []
+def recommend_book_knn(books_df, book_name, books_df_knn, knn_model, X_final, editions=None):
+    """Recommends books similar to `book_name` with the content-based KNN model.
 
-        book_idx = books_df_knn[books_df_knn["Book-Title"] == book_name].index[0]
-        # Slicing keeps a 2D row and works for both dense and sparse matrices.
-        _, suggestions = knn_model.kneighbors(X_final[book_idx:book_idx + 1], n_neighbors=11)
-        books_list = [books_df_knn.iloc[suggestion_id]["Book-Title"] for suggestion_id in suggestions[0]]
-        books_list = [book for book in books_list if book != book_name]
-        
-        book_names, poster_urls, book_descriptions = fetch_poster(books_df, books_list[:10])
-        return book_names, poster_urls, book_descriptions
-    except Exception as e:
-        st.error("Recommendation display error (KNN): " + str(e))
+    Other editions of the book, and repeated editions among the neighbours,
+    are left out.
+    """
+    if book_name not in books_df_knn["Book-Title"].values:
+        st.error("Selected book doesn't exist.")
         return [], [], []
+    titles = books_df_knn["Book-Title"].tolist()
+    if editions is None:
+        editions = EditionIndex(titles, books_df_knn["Book-Author"])
+    book_idx = titles.index(book_name)
+    books_list = similar_books(book_idx, knn_model, X_final, titles, editions, n=10)
+    return fetch_poster(books_df, books_list)
 
-def recommend_book_svd(user_id, books_df, svd_model, n_recommendations=10):
-    """Recommend books for a given user using the SVD model."""
-    if user_id not in books_df["User-ID"].unique():
-        # Bayesian average: a book rated 10 by a single reader does not win.
+
+def recommend_for_reader(user_id, books_df, reader_model, n_recommendations=10):
+    """Books for a reader of the dataset, as (title, liked title it comes from) pairs.
+
+    Unknown readers and guests get the best books by Bayesian average, which
+    a single 10/10 cannot top; their second element is None.
+    """
+    if reader_model is None or not reader_model.knows(user_id):
         popular_books = (
             books_df.drop_duplicates(subset="Book-Title")
-            .set_index("Book-Title")["Bayes-Rating"]
-            .sort_values(ascending=False)
+            .sort_values("Bayes-Rating", ascending=False)["Book-Title"]
             .head(n_recommendations)
         )
-        book_name, poster_url, book_descriptions = fetch_poster(books_df, popular_books.index.tolist())
-        return list(zip(book_name, popular_books.values, poster_url, book_descriptions))
+        return [(title, None) for title in popular_books]
+    return reader_model.recommend(user_id, n=n_recommendations)
 
-    all_books = books_df["Book-Title"].unique()
-    user_books = books_df[books_df["User-ID"] == user_id]["Book-Title"].unique()
-    books_to_predict = [book for book in all_books if book not in user_books]
-    
-    if not books_to_predict:
-        st.warning("No books to find for this user.")
-        return []
-
-    predictions = [
-        (book, svd_model.predict(user_id, book).est) for book in books_to_predict
-    ]
-    predictions = sorted(predictions, key=lambda x: x[1], reverse=True)[:n_recommendations]
-
-    book_name, poster_url, book_descriptions = fetch_poster(books_df, [book for book, _ in predictions])
-    return list(zip(book_name, [rating for _, rating in predictions], poster_url, book_descriptions))
 
 def render_aligned_image(image_url, title, height=500):
     """Returns the HTML of a book cover with its title underneath.

@@ -1,16 +1,19 @@
 """ Trains the book recommender: a content-based KNN model and an SVD model. """
 
+import itertools
 import os
 import pickle
-import pandas as pd
+
 import numpy as np
-from collections import defaultdict
+import pandas as pd
 from scipy.sparse import coo_matrix, hstack
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.neighbors import NearestNeighbors
 from sklearn.preprocessing import OneHotEncoder, normalize
-from surprise import BaselineOnly, Dataset, Reader, SVD, accuracy
+from surprise import SVD, Dataset, Reader
 from surprise.model_selection import train_test_split
+
+from recommender import LIKED_RATING, EditionIndex, ReaderRecommender
 
 
 def load_data(file_path):
@@ -149,73 +152,90 @@ def train_knn_model_with_metadata(data):
 KNN_COLUMNS = ["ISBN", "Book-Title", "Book-Author", "Final_Tags", "Book-Rating", "Cluster_hdbscan"]
 
 
-def precision_recall_at_k(predictions, k=5, threshold=8, min_items=10):
-    """Mean precision@k and recall@k over users (a rating >= threshold is relevant).
+def ranking_metrics(top_lists, held_out, k=10):
+    """Hit rate, recall and diversity of top-k lists.
 
-    Only users with at least `min_items` held-out ratings are scored: with
-    fewer, the top k already holds almost all of them and the metric says
-    nothing.
+    - hit@k: share of readers with at least one held-out liked book in their list
+    - recall@k: mean share of their held-out liked books found in their list
+    - distinct books: number of different books over all the lists
+    - overlap: mean share of books two readers' lists have in common
     """
-    by_user = defaultdict(list)
-    for uid, _, true_r, est, _ in predictions:
-        by_user[uid].append((est, true_r))
-    precisions, recalls = [], []
-    for ratings in by_user.values():
-        if len(ratings) < min_items:
-            continue
-        n_rel = sum(true_r >= threshold for _, true_r in ratings)
-        if not n_rel:
-            continue
-        ratings.sort(key=lambda x: x[0], reverse=True)
-        n_rec_rel = sum(true_r >= threshold for _, true_r in ratings[:k])
-        precisions.append(n_rec_rel / k)
-        recalls.append(n_rec_rel / n_rel)
-    return float(np.mean(precisions)), float(np.mean(recalls)), len(precisions)
+    hits = [len(set(top[:k]) & held_out[u]) for u, top in top_lists.items()]
+    recalls = [h / len(held_out[u]) for h, u in zip(hits, top_lists)]
+    tops = [set(top[:k]) for top in top_lists.values()]
+    pairs = list(itertools.combinations(tops[:150], 2))
+    return {
+        f"Hit@{k}": float(np.mean([h > 0 for h in hits])),
+        f"Recall@{k}": float(np.mean(recalls)),
+        "Distinct books": len(set().union(*tops)),
+        "Overlap": float(np.mean([len(a & b) / k for a, b in pairs])) if pairs else np.nan,
+    }
 
 
-def train_svd_model(data):
-    """Evaluates the SVD model on a held-out split, then retrains it on all ratings."""
-    print("\nStep 6: Training the SVD model...")
+def evaluate_reader_models(data, X, knn_titles, editions, n_readers=400, k=10):
+    """Compares the "books for a reader" models on a 20 % held-out split.
+
+    Each model ranks every book the reader has not rated in the training part,
+    as the app does, and is scored on the held-out books the reader liked
+    (rating of 8 or more).
+    """
+    print("\nStep 5: Evaluating the books for a reader...")
     reader = Reader(rating_scale=(data["Book-Rating"].min(), data["Book-Rating"].max()))
     dataset = Dataset.load_from_df(data[["User-ID", "Book-Title", "Book-Rating"]], reader)
-    params = {"n_factors": 50, "lr_all": 0.005, "reg_all": 0.02, "random_state": 42}
-
     trainset, testset = train_test_split(dataset, test_size=0.2, random_state=42)
-    svd = SVD(**params)
+    train = pd.DataFrame(
+        [(trainset.to_raw_uid(u), trainset.to_raw_iid(i), r) for u, i, r in trainset.all_ratings()],
+        columns=["User-ID", "Book-Title", "Book-Rating"],
+    )
+
+    held_out = {}
+    for user, title, rating in testset:
+        if rating >= LIKED_RATING:
+            held_out.setdefault(user, set()).add(title)
+    rated = train.groupby("User-ID")["Book-Title"].apply(set)
+    readers = sorted(u for u in held_out if u in rated.index)
+    rng = np.random.default_rng(0)
+    readers = list(rng.choice(readers, size=min(n_readers, len(readers)), replace=False))
+
+    stats = train.groupby("Book-Title")["Book-Rating"].agg(["mean", "count"])
+    prior = stats["count"].median()
+    bayes = (stats["count"] * stats["mean"] + prior * train["Book-Rating"].mean()) / (stats["count"] + prior)
+
+    def top_of(scores):
+        def top(user):
+            ranked = scores(user).sort_values(ascending=False, kind="stable").index
+            return [t for t in ranked if t not in rated[user]][:k]
+        return top
+
+    svd = SVD(n_factors=50, lr_all=0.005, reg_all=0.02, random_state=42)
     svd.fit(trainset)
-    baseline = BaselineOnly(verbose=False)
-    baseline.fit(trainset)
+    items = stats.index
+    inner = [trainset.to_inner_iid(t) for t in items]
+    def svd_scores(user):
+        u = trainset.to_inner_uid(user)
+        est = trainset.global_mean + svd.bu[u] + svd.bi[inner] + svd.qi[inner] @ svd.pu[u]
+        return pd.Series(est, index=items)
 
-    rng = np.random.default_rng(42)
+    hybrid = ReaderRecommender(train, X, knn_titles, editions)
+    models = {
+        "Most read": top_of(lambda u: stats["count"]),
+        "Bayesian average": top_of(lambda u: bayes),
+        "SVD (predicted rating)": top_of(svd_scores),
+        "Hybrid (content + co-liked)": lambda u: [t for t, _ in hybrid.recommend(u, n=k)],
+    }
     rows = []
-    for name, model in (("SVD", svd), ("Baseline", baseline), ("Random order", None)):
-        if model is None:
-            preds = [p._replace(est=rng.random()) for p in svd.test(testset)]
-            rmse = mae = np.nan
-        else:
-            preds = model.test(testset)
-            rmse = accuracy.rmse(preds, verbose=False)
-            mae = accuracy.mae(preds, verbose=False)
-        p_at_k, r_at_k, n_users = precision_recall_at_k(preds)
-        rows.append({"Model": name, "RMSE": rmse, "MAE": mae,
-                     "Precision@5": p_at_k, "Recall@5": r_at_k})
-    train_preds = svd.test(trainset.build_testset())
-    rows.append({"Model": "SVD (train)",
-                 "RMSE": accuracy.rmse(train_preds, verbose=False),
-                 "MAE": accuracy.mae(train_preds, verbose=False)})
-    print(f"Evaluation on a 20 % held-out split (relevant = rating >= 8, "
-          f"ranking metrics over {n_users} users with 10+ held-out ratings):")
-    print(pd.DataFrame(rows).round(3).to_string(index=False))
-
-    print("Retraining SVD on 100 % of the ratings...")
-    final_svd = SVD(**params)
-    final_svd.fit(dataset.build_full_trainset())
-    return final_svd
+    for name, top in models.items():
+        metrics = ranking_metrics({u: top(u) for u in readers}, held_out, k=k)
+        rows.append({"Model": name, **metrics})
+    table = pd.DataFrame(rows)
+    print(f"{len(readers)} readers, top {k} among all the books they have not rated:")
+    print(table.round(3).to_string(index=False))
+    return table
 
 
 def save_artifacts(artifacts_path, **artifacts):
     """Saves artifacts to the specified directory."""
-    print("\nStep 7: Saving artifacts...")
+    print("\nStep 6: Saving artifacts...")
     os.makedirs(artifacts_path, exist_ok=True)
     for name, artifact in artifacts.items():
         file_path = os.path.join(artifacts_path, f"{name}.pkl")
@@ -239,16 +259,15 @@ def main():
 
     _ , book_titles = create_user_item_matrix(book_df)
 
-    # Train KNN model & SVD model
-    # Train KNN model with metadata
+    # Train the KNN model, then evaluate the books for a reader
     knn_model, X_final_normalized = train_knn_model_with_metadata(book_df_knn)
-    svd_model = train_svd_model(book_df)
+    editions = EditionIndex(book_df_knn["Book-Title"], book_df_knn["Book-Author"])
+    evaluate_reader_models(book_df, X_final_normalized, book_df_knn["Book-Title"], editions)
 
     # Save artifacts
     save_artifacts(
         artifacts_path,
         knn_model=knn_model,
-        svd_model=svd_model,
         book_titles=book_titles,
         X_final=X_final_normalized,
         book_df=book_df,

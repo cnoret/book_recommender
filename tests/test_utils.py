@@ -44,7 +44,7 @@ def test_recommend_book_knn_excludes_the_query():
     angles = np.linspace(0, np.pi / 2, 12)
     X = np.column_stack([np.cos(angles), np.sin(angles)])
     model = NearestNeighbors(metric="cosine", algorithm="brute").fit(X)
-    knn_df = pd.DataFrame({"Book-Title": titles})
+    knn_df = pd.DataFrame({"Book-Title": titles, "Book-Author": ["Someone"] * 12})
     books_df = pd.DataFrame({
         "Book-Title": titles,
         "Image-URL-L": [f"http://img/{i}" for i in range(12)],
@@ -62,9 +62,9 @@ def test_recommend_book_knn_unknown_book_returns_three_lists(books_df):
     assert result == ([], [], [])
 
 
-def test_recommend_book_svd_guest_uses_bayes_rating(books_df):
-    recommendations = utils.recommend_book_svd("Guest user", books_df, svd_model=None, n_recommendations=2)
-    assert [title for title, *_ in recommendations] == ["Emma", "Dune"]
+def test_recommend_for_reader_guest_uses_bayes_rating(books_df):
+    recommendations = utils.recommend_for_reader(None, books_df, reader_model=None, n_recommendations=2)
+    assert recommendations == [("Emma", None), ("Dune", None)]
 
 
 def test_render_aligned_image_escapes_title():

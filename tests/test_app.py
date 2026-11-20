@@ -42,3 +42,54 @@ def test_branding_and_about_page():
     at = AppTest.from_file(APP, default_timeout=120).run()
     assert at.title[0].value == "Next Chapter"
     assert "Find the book that comes after the one you just closed." in _markdown(at)
+
+
+def _page(name):
+    """Runs one page alone: the pages of app.py are not files AppTest can switch to."""
+    def script(page):
+        import streamlit as st
+
+        from tabs import for_you, search
+        from ui import build_catalog
+        from utils import load_model_and_data
+
+        _, _, books_df, _, _, _, reader_model = load_model_and_data()
+        catalog = build_catalog(books_df)
+        st.session_state["pages"] = {}
+        if page == "for_you":
+            for_you.show(catalog, books_df, reader_model)
+        else:
+            search.show(catalog)
+
+    return AppTest.from_function(script, args=(name,), default_timeout=120)
+
+
+def test_reader_page_explains_each_pick():
+    at = _page("for_you").run()
+    assert not at.exception
+    assert _markdown(at).count('class="book-card"') == 10  # general favourites
+
+    at.selectbox(key="reader").set_value(at.selectbox(key="reader").options[0]).run()
+    assert not at.exception
+    assert [h.value for h in at.header] == ["What they loved", "What they might like next"]
+    assert _markdown(at).count("Because they liked") == 10
+
+
+def test_reader_picks_differ_between_readers():
+    picks = []
+    for option in (0, 50):
+        at = _page("for_you").run()
+        at.selectbox(key="reader").set_value(at.selectbox(key="reader").options[option]).run()
+        cards = _markdown(at).split("What they might like next")[-1]
+        picks.append(set(cards.split('class="book-title" title="')[1:]))
+    assert len(picks[0] & picks[1]) < 5
+
+
+def test_search_by_title_and_author():
+    at = _page("search").run()
+    at.text_input[0].input("tolkien").run()
+    assert not at.exception
+    assert "The Hobbit" in _markdown(at)
+
+    at.text_input[0].input("(").run()  # not a regular expression
+    assert not at.exception
