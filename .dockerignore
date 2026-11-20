@@ -1,13 +1,19 @@
-# Only the app code and artifacts/ go into the image
+# Only the app code, its theme and artifacts/ go into the image
 .git
 .github
+.devcontainer
+.venv/
+venv/
+.env
 __pycache__/
 *.py[cod]
 .pytest_cache/
+.ruff_cache/
 data/
 notebooks/
 scrapper/
 tests/
 train.py
 evaluate_knn.py
+requirements-dev.txt
 *.ipynb

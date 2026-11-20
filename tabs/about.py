@@ -3,7 +3,7 @@ import streamlit as st
 REPO = "https://github.com/cnoret/book_recommender"
 
 
-def show():
+def show(counts):
     st.title("About Next Chapter")
     st.markdown('<p class="tagline">Find the book that comes after the one you just closed.</p>',
                 unsafe_allow_html=True)
@@ -16,9 +16,9 @@ Next Chapter suggests books in two complementary ways:
   books close to them in content and loved by the same readers.
 """)
     c1, c2, c3 = st.columns(3)
-    c1.metric("Books", "3,217")
-    c2.metric("Readers", "1,914")
-    c3.metric("Ratings", "42,331")
+    c1.metric("Books", f"{counts['books']:,}")
+    c2.metric("Readers", f"{counts['readers']:,}")
+    c3.metric("Ratings", f"{counts['ratings']:,}")
 
     st.header("How the recommendations work")
     st.subheader("Similar books")
@@ -58,20 +58,20 @@ global mean, so that a single 10/10 does not put a book at the top.
 | --- | --- | --- |
 | Same author | 0.462 | 0.003 |
 | Tags overlap (Jaccard) | 0.624 | 0.228 |
-| Shared readers | 0.324 | 0.060 |
+| Shared readers | 0.322 | 0.060 |
 
 **Books for a reader**: 20 % of the ratings are held out. For 400 readers, each model ranks every
 book they have not rated and is scored on the held-out books they loved.
 
 | Model | Hit@10 | Recall@10 | Distinct books |
 | --- | --- | --- | --- |
-| Most read | 0.115 | 0.044 | 15 |
-| SVD (predicted rating) | 0.048 | 0.012 | 76 |
-| **Hybrid (content + co-liked)** | **0.305** | **0.135** | **1,602** |
+| Most read | 0.132 | 0.040 | 15 |
+| **Hybrid (content + co-liked)** | **0.302** | **0.125** | **1,591** |
 
 *Hit@10* is the share of readers with at least one loved book among their ten picks, and
-*distinct books* counts the different books over the 400 lists. The app first used SVD: with
-about 22 ratings per reader, it gave almost everyone the same list.
+*distinct books* counts the different books over the 400 lists. The app first used an SVD model:
+with about 22 ratings per reader, it gave almost everyone the same list and found a loved book
+for fewer than 5 % of readers.
 """)
 
     st.header("Data and limits")
@@ -115,7 +115,7 @@ Next Chapter began as a group project, built in a few days by four people:
     st.header("Built with")
     st.markdown("""
 [Streamlit](https://streamlit.io/) · [scikit-learn](https://scikit-learn.org/) ·
-[Surprise](https://surpriselib.com/) · [pandas](https://pandas.pydata.org/) ·
+[pandas](https://pandas.pydata.org/) ·
 [NumPy](https://numpy.org/) · [SciPy](https://scipy.org/) ·
 [Requests](https://requests.readthedocs.io/) · [Beautiful Soup](https://www.crummy.com/software/BeautifulSoup/)
 """)

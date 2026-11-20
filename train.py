@@ -1,4 +1,10 @@
-""" Trains the book recommender: a content-based KNN model and an SVD model. """
+"""Trains the book recommender and evaluates its suggestions.
+
+- similar books: a content-based KNN model, saved in artifacts/;
+- books for a reader: a hybrid of content similarity and co-liked books
+  (recommender.ReaderRecommender), built by the app from the same artifacts
+  and compared here with two popularity rankings.
+"""
 
 import itertools
 import os
@@ -10,8 +16,6 @@ from scipy.sparse import coo_matrix, hstack
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.neighbors import NearestNeighbors
 from sklearn.preprocessing import OneHotEncoder, normalize
-from surprise import SVD, Dataset, Reader
-from surprise.model_selection import train_test_split
 
 from recommender import LIKED_RATING, EditionIndex, ReaderRecommender
 
@@ -180,18 +184,12 @@ def evaluate_reader_models(data, X, knn_titles, editions, n_readers=400, k=10):
     (rating of 8 or more).
     """
     print("\nStep 5: Evaluating the books for a reader...")
-    reader = Reader(rating_scale=(data["Book-Rating"].min(), data["Book-Rating"].max()))
-    dataset = Dataset.load_from_df(data[["User-ID", "Book-Title", "Book-Rating"]], reader)
-    trainset, testset = train_test_split(dataset, test_size=0.2, random_state=42)
-    train = pd.DataFrame(
-        [(trainset.to_raw_uid(u), trainset.to_raw_iid(i), r) for u, i, r in trainset.all_ratings()],
-        columns=["User-ID", "Book-Title", "Book-Rating"],
-    )
+    ratings = data[["User-ID", "Book-Title", "Book-Rating"]]
+    is_test = np.random.default_rng(42).random(len(ratings)) < 0.2
+    train, test = ratings[~is_test], ratings[is_test]
 
-    held_out = {}
-    for user, title, rating in testset:
-        if rating >= LIKED_RATING:
-            held_out.setdefault(user, set()).add(title)
+    liked_test = test[test["Book-Rating"] >= LIKED_RATING]
+    held_out = liked_test.groupby("User-ID")["Book-Title"].apply(set).to_dict()
     rated = train.groupby("User-ID")["Book-Title"].apply(set)
     readers = sorted(u for u in held_out if u in rated.index)
     rng = np.random.default_rng(0)
@@ -207,20 +205,10 @@ def evaluate_reader_models(data, X, knn_titles, editions, n_readers=400, k=10):
             return [t for t in ranked if t not in rated[user]][:k]
         return top
 
-    svd = SVD(n_factors=50, lr_all=0.005, reg_all=0.02, random_state=42)
-    svd.fit(trainset)
-    items = stats.index
-    inner = [trainset.to_inner_iid(t) for t in items]
-    def svd_scores(user):
-        u = trainset.to_inner_uid(user)
-        est = trainset.global_mean + svd.bu[u] + svd.bi[inner] + svd.qi[inner] @ svd.pu[u]
-        return pd.Series(est, index=items)
-
     hybrid = ReaderRecommender(train, X, knn_titles, editions)
     models = {
         "Most read": top_of(lambda u: stats["count"]),
         "Bayesian average": top_of(lambda u: bayes),
-        "SVD (predicted rating)": top_of(svd_scores),
         "Hybrid (content + co-liked)": lambda u: [t for t, _ in hybrid.recommend(u, n=k)],
     }
     rows = []

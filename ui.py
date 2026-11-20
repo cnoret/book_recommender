@@ -73,6 +73,16 @@ def build_catalog(_books_df):
     return catalog
 
 
+@st.cache_data(show_spinner=False)
+def dataset_counts(_books_df):
+    """Number of books, readers and ratings, shown in the footer and the About page."""
+    return {
+        "books": _books_df["Book-Title"].nunique(),
+        "readers": _books_df["User-ID"].nunique(),
+        "ratings": len(_books_df),
+    }
+
+
 def card_html(title, author, cover, avg=None, count=None, badge=None):
     esc = html.escape
     meta = ""
