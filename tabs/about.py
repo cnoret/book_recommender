@@ -1,6 +1,6 @@
 import streamlit as st
 
-REPO = "https://github.com/cnoret/book_recommender"
+REPO = "https://github.com/cnoret/next-chapter"
 
 
 def show(counts):
