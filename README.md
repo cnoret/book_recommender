@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="https://next-chapter.streamlit.app"><img src="https://static.streamlit.io/badges/streamlit_badge_black_white.svg" alt="Open in Streamlit"></a>
-  <a href="https://github.com/cnoret/book_recommender/actions/workflows/tests.yml"><img src="https://github.com/cnoret/book_recommender/actions/workflows/tests.yml/badge.svg" alt="Tests"></a>
+  <a href="https://github.com/cnoret/next-chapter/actions/workflows/tests.yml"><img src="https://github.com/cnoret/next-chapter/actions/workflows/tests.yml/badge.svg" alt="Tests"></a>
   <img src="https://img.shields.io/badge/python-3.11-blue" alt="Python 3.11">
   <img src="https://img.shields.io/badge/built%20with-Streamlit-ff4b4b" alt="Built with Streamlit">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License"></a>
@@ -108,8 +108,8 @@ The app used to rank books by the rating an SVD model ([Surprise](https://surpri
 ### Run the app
 
 ```bash
-git clone https://github.com/cnoret/book_recommender.git
-cd book_recommender
+git clone https://github.com/cnoret/next-chapter.git
+cd next-chapter
 python3.11 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
@@ -140,18 +140,18 @@ A dev container (`.devcontainer/`) sets up the same environment in GitHub Codesp
 ### Docker
 
 ```bash
-docker build -t book-recommender .
-docker run -p 7860:7860 book-recommender
+docker build -t next-chapter .
+docker run -p 7860:7860 next-chapter
 ```
 
-The app is then available at <http://localhost:7860>. The image holds only the app code and `artifacts/`: `.dockerignore` keeps the data, notebooks, scraper and tests out of it. The port can be changed with the `PORT` environment variable (`docker run -e PORT=8080 -p 8080:8080 book-recommender`), and Docker reports the container as healthy once Streamlit answers on `/_stcore/health`.
+The app is then available at <http://localhost:7860>. The image holds only the app code and `artifacts/`: `.dockerignore` keeps the data, notebooks, scraper and tests out of it. The port can be changed with the `PORT` environment variable (`docker run -e PORT=8080 -p 8080:8080 next-chapter`), and Docker reports the container as healthy once Streamlit answers on `/_stcore/health`.
 
 ---
 
 ## 🗂️ Project structure
 
 ```
-book_recommender/
+next-chapter/
 ├── app.py                 # Streamlit entry point: loads the artifacts and sets up the pages
 ├── ui.py                  # Book cards, responsive grids and page styles
 ├── utils.py               # Loading and recommendation helpers used by the pages

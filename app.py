@@ -35,5 +35,5 @@ st.divider()
 st.caption(
     f"**Next Chapter** · {counts['books']:,} books and {counts['ratings']:,} ratings from the Book-Crossing dataset, "
     "with summaries from Open Library. Covers may be missing for some books. · "
-    "[Source code on GitHub](https://github.com/cnoret/book_recommender)"
+    "[Source code on GitHub](https://github.com/cnoret/next-chapter)"
 )
