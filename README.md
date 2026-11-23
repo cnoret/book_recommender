@@ -10,6 +10,10 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License"></a>
 </p>
 
+<p align="center">
+  <a href="https://next-chapter.streamlit.app"><img src="docs/next-chapter-discover.png" alt="The Discover page of Next Chapter, with the most read books of the dataset" width="900"></a>
+</p>
+
 **Next Chapter** is a book recommender built with Streamlit: **[try it online](https://next-chapter.streamlit.app)**. It suggests books in two complementary ways:
 
 - **Books like this one**: a content-based k-Nearest Neighbors model that compares tags, descriptions, authors and thematic clusters.
